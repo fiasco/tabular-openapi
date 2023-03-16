@@ -1,0 +1,22 @@
+{
+    "name": "fiasco/tabular-openapi",
+    "description": "Convert OpenAPI Schema into a relational table structure",
+    "type": "library",
+    "autoload": {
+        "psr-4": {
+            "Fiasco\\TabularOpenapi\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Josh Waihi",
+            "email": "joshwaihi@gmail.com"
+        }
+    ],
+    "require": {
+        "cebe/php-openapi": "^1.7"
+    },
+    "require-dev": {
+        "symfony/console": "^6.2"
+    }
+}
