@@ -81,9 +81,20 @@ class TableTest extends TestCase {
         }
         $this->assertEquals(2, $total);
 
+        $line_item2 = [
+            'sku' => 'PR-9384028',
+            'quantity' => 2,
+            'wishlist' => true,
+            'campaign' => ['instagram']
+        ];
+
         $cart = [
             'id' => 1,
             'items' => [ $line_item ],
+            "itemsBySku" => [
+                $line_item['sku'] => $line_item,
+                $line_item2['sku'] => $line_item2
+            ],
             'timestamp' => new DateTime(),
             'owner' => $owner
         ];
@@ -91,18 +102,36 @@ class TableTest extends TestCase {
         $tableCart = new Table('cart', 
             new Column(name: 'id', schema: $openapi->components->schemas['cart']->properties['id'], tableName: 'cart'),
             new CollapsedColumn(name: 'items', schema: $openapi->components->schemas['cart']->properties['items'], tableName: 'cart'),
+            new ObjectColumn(name: "itemsBySku", schema: $openapi->components->schemas['cart']->properties['itemsBySku'], tableName: 'cart'),
             new Column(name: 'timestamp', schema: $openapi->components->schemas['cart']->properties['timestamp'], tableName: 'cart'),
-            new ObjectColumn(name: 'owner', schema: $openapi->components->schemas['cart']->properties['owner'], tableName: 'owner')
+            new ObjectColumn(name: 'owner', schema: $openapi->components->schemas['cart']->properties['owner'], tableName: 'cart')
         );
     
 
         $tableCart->insertRow($cart);
         $generator = $tableCart->fetch(0);
         $row = $generator->current();
+
         $this->assertIsArray($row);
         $this->assertArrayHasKey('id', $row);
         $this->assertArrayHasKey('items', $row);
         $this->assertIsNotArray($row['items']);
+        $this->assertArrayHasKey('itemsBySku', $row);
+        $this->assertEquals('PR-19273718', $row['itemsBySku']);
+        $this->assertArrayHasKey('timestamp', $row);
+        $this->assertArrayHasKey('owner', $row);
+        $this->assertIsString($row['owner']);
+        $this->assertIsArray($tableCart->getReference('#/components/schemas/owner', 'owner', $row['owner']));
+
+        $generator->next();
+        $row = $generator->current();
+
+        $this->assertIsArray($row);
+        $this->assertArrayHasKey('id', $row);
+        $this->assertArrayHasKey('items', $row);
+        $this->assertIsNotArray($row['items']);
+        $this->assertArrayHasKey('itemsBySku', $row);
+        $this->assertEquals('PR-9384028', $row['itemsBySku']);
         $this->assertArrayHasKey('timestamp', $row);
         $this->assertArrayHasKey('owner', $row);
         $this->assertIsString($row['owner']);
@@ -112,6 +141,6 @@ class TableTest extends TestCase {
         foreach ($tableCart->fetchAll() as $row) {
             $total++;
         }
-        $this->assertEquals(1, $total);
+        $this->assertEquals(2, $total);
     }
 }

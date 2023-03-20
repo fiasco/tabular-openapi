@@ -4,27 +4,38 @@ namespace Fiasco\TabularOpenapi\Columns;
 
 use cebe\openapi\spec\Reference;
 use cebe\openapi\spec\Schema;
+use Fiasco\TabularOpenapi\SchemaException;
 use Fiasco\TabularOpenapi\Values\Reference as ValuesReference;
 use Generator;
 
-class ObjectColumn extends DynamicColumns {
+class ObjectColumn implements ColumnInterface {
     protected array $references;
+    protected DynamicColumns|CollapsedReferenceColumn $dynamic;
+    protected array $columns;
 
     public function __construct(
         public readonly Schema|Reference $schema,
-        string $tableName,
-        string $name,
-        string $columnPrefix = '',
+        public readonly string $tableName,
+        public readonly string $name,
+        public readonly string $columnPrefix = '',
     ) {
-        parent::__construct(
-            additionalProperties: $schema->additionalProperties ?? false,
-            tableName: $tableName,
-            columnPrefix: $columnPrefix,
-            name: $name
-        );
         foreach ($schema->properties ?? [] as $column => $info) {
             $this->columns[$column] = $this->buildColumn($column, $info);
-        } 
+        }
+        if (($schema->additionalProperties ?? false) instanceof Reference) {
+            $this->dynamic = new CollapsedReferenceColumn(
+                name: $name,
+                reference: $schema->additionalProperties,
+                tableName: $tableName
+            );
+        }
+        elseif ($schema->additionalProperties ?? false) {
+            $this->dynamic = new DynamicColumns(
+                additionalProperties: $schema->additionalProperties ?? false,
+                tableName: $tableName,
+                columnPrefix: $name.'.'
+            );
+        }
     }
 
     /**
@@ -32,9 +43,9 @@ class ObjectColumn extends DynamicColumns {
      */
     protected function buildColumn(string $name, Schema $info) {
         return match ($info->type) {
-            'object' => new static($info, $this->tableName, $this->name.'_', $name),
-            'array' => new CollapsedColumn($this->name . '_' . $name, $info, $this->tableName),
-            default => new Column($this->name . '_' . $name, $info, $this->tableName)
+            'object' => new static($info, $this->tableName, $this->name.'.', $name),
+            'array' => new CollapsedColumn($this->name . '.' . $name, $info, $this->tableName),
+            default => new Column($this->name . '.' . $name, $info, $this->tableName)
         };
     }
 
@@ -48,7 +59,22 @@ class ObjectColumn extends DynamicColumns {
             $this->references[$index] = $value;
             return;
         }
-        parent::insert($index, $value);
+        if (!is_object($value) && !is_array($value)) {
+            throw new SchemaException(get_class($this) . " expects an object or array to be passed as an insertable value. " . ucfirst(gettype($value)) . " given for '{$this->tableName}.{$this->name}'.");
+        }
+        $fields = is_object($value) ? get_object_vars($value) : $value;
+        $dynamic = [];
+        foreach ($fields as $field => $value) {
+            if (!isset($this->columns[$field])) {
+                $dynamic[$field] = $value;
+                continue;
+            }
+            $this->columns[$field]->insert($index, $value);
+        }
+        if (!isset($this->dynamic)) {
+            return;
+        }
+        $this->dynamic->insert($index, $dynamic);
     }
 
     /**
@@ -59,6 +85,13 @@ class ObjectColumn extends DynamicColumns {
         if ($this->schema instanceof Reference) {
             yield new ValuesReference($index, $this->schema->getReference(), $this->references[$index], $this->name);
         }
-        return parent::get($index);
+        foreach ($this->columns ?? [] as $column) {
+            yield $column->get($index);
+        }
+        if (isset($this->dynamic)) {
+            foreach ($this->dynamic->get($index) as $column) {
+                yield $column;
+            }
+        }
     }
 }

@@ -141,9 +141,8 @@ class Table {
                 }
                 break;
             case $data instanceof Reference:
-                $ref_id = $this->generateUuid();
-                $this->externalRows[$data->ref][$data->name][$ref_id] = $data->value;
-                $grid[$column->name][$data->index] = $ref_id;
+                $this->externalRows[$data->ref][$data->name][$data->uuid] = $data->value;
+                $grid[$column->name][$data->index] = $data->key ?? $data->uuid;
                 break;
         }
     }

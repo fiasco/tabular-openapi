@@ -4,7 +4,6 @@ namespace Fiasco\TabularOpenapi\Columns;
 
 use cebe\openapi\spec\Reference;
 use Fiasco\TabularOpenapi\SchemaException;
-use Fiasco\TabularOpenapi\TableOptions;
 use Fiasco\TabularOpenapi\Values\Reference as ValuesReference;
 use Generator;
 use TypeError;
@@ -14,11 +13,9 @@ class ReferenceColumn implements ColumnInterface {
     public readonly string $ref;
 
     public function __construct(
-        public readonly string $prefix,
         public readonly string $name, 
         public readonly Reference $reference, 
         public readonly string $tableName,
-        public readonly int $options = TableOptions::STORE_REF->value,
         public readonly bool $nullable = true
     )
     {

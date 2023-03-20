@@ -35,6 +35,9 @@ class TableManagerTest extends TestCase {
         $cart = [
             'id' => 1,
             'items' => [ $line_item ],
+            'itemsBySku' => [
+                $line_item['sku'] => $line_item
+            ],
             'timestamp' => new DateTime(),
             'owner' => $owner
         ];
@@ -43,6 +46,11 @@ class TableManagerTest extends TestCase {
         $tableCart = $table_manager->getTable('cart');
 
         $this->assertInstanceOf(Table::class, $tableCart);
+        $this->assertArrayHasKey('id', $tableCart->columns);
+        $this->assertArrayHasKey('items', $tableCart->columns);
+        $this->assertArrayHasKey('itemsBySku', $tableCart->columns);
+        $this->assertArrayHasKey('timestamp', $tableCart->columns);
+        $this->assertArrayHasKey('owner', $tableCart->columns);
 
         $tableCart->insertRow($cart);
 
@@ -51,6 +59,6 @@ class TableManagerTest extends TestCase {
         foreach ($lookupTable->fetchAll() as $row) {
             $total++;
         }
-        $this->assertEquals(2, $total);
+        $this->assertEquals(3, $total);
     }
 }

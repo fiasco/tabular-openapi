@@ -34,13 +34,13 @@ class TableManager {
         $columns = [];
         foreach ($table_schema->properties ?? [] as $column => $info) {
             if ($info instanceof Reference) {
-                $columns[] = new ObjectColumn($info, $name, '', $column);
+                $columns[] = new ObjectColumn(schema: $info, tableName: $name, name: $column);
                 continue;
             }
             $columns[] = match ($info->type) {
-                'object' => new ObjectColumn($info, $name, '', $column),
-                'array' => new CollapsedColumn($column, $info, $name),
-                default => new Column($column, $info, $name)
+                'object' => new ObjectColumn(schema: $info, tableName: $name, name: $column),
+                'array' => new CollapsedColumn(name: $column, schema: $info, tableName: $name),
+                default => new Column(name: $column, schema: $info, tableName: $name)
             };
         } 
         if ($table_schema->additionalProperties) {

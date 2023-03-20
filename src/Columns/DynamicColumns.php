@@ -25,7 +25,7 @@ class DynamicColumns implements ColumnInterface
 
     public function get(int $index):Generator
     {
-        foreach ($this->columns as $column) {
+        foreach ($this->columns ?? [] as $column) {
             yield new Column($column, $index);
         }
     }
@@ -37,7 +37,6 @@ class DynamicColumns implements ColumnInterface
         }
         $fields = is_object($value) ? get_object_vars($value) : $value;
         foreach ($fields as $field => $value) {
-            $column = $this->getDynamicColumn($field, $value);
             $this->getDynamicColumn($field, $value)->insert($index, $value);
         }
     }
@@ -60,7 +59,7 @@ class DynamicColumns implements ColumnInterface
 
                 // OpenApi points to a another place in the schema which likely refers to inserting into a foreign table.
             case $this->additionalProperties instanceof Reference:
-                $this->columns[$name] = new ReferenceColumn($this->columnPrefix, $name, $this->additionalProperties, $this->tableName);
+                $this->columns[$name] = new ReferenceColumn($this->columnPrefix . $name, $this->additionalProperties, $this->tableName);
                 return $this->columns[$name];
                 break;
             default:
