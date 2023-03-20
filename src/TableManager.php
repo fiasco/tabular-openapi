@@ -15,6 +15,7 @@ use Fiasco\TabularOpenapi\Columns\ObjectColumn;
 class TableManager {
     public readonly OpenApi $openApi;
     protected array $tables;
+    protected array $references;
 
     public function __construct(public readonly string $uri)
     {
@@ -63,6 +64,11 @@ class TableManager {
 
     public function buildLookupTable():Table
     {
+        do {
+            $found = $this->findReferences();
+        }
+        while ($found > 0);
+
         $lookup_table = new Table('tabular_openapi_lookup',
             new Column(name: 'foreign_table', schema: new Schema(['type' => 'string']), tableName: 'tabular_openapi_lookup'),
             new Column(name: 'foreign_column', schema: new Schema(['type' => 'string']), tableName: 'tabular_openapi_lookup'),
@@ -71,7 +77,34 @@ class TableManager {
             new Column(name: 'row', schema: new Schema(['type' => 'integer']), tableName: 'tabular_openapi_lookup'),
         );
 
+
+        foreach ($this->references as $foreign_table => $columns) {
+            foreach ($columns as $foreign_column => $refs) {
+                foreach ($refs as $ref => $ids) {
+                    foreach ($ids as $id => $row_id) {
+                        $lookup_table->insertRow([
+                            'foreign_table' => $foreign_table,
+                            'foreign_column' => $foreign_column,
+                            'reference' => $ref,
+                            'uuid' => $id,
+                            'row' => $row_id
+                        ]);
+                    }
+                }
+            }
+        }
+
+        return $lookup_table;
+    }
+
+    protected function findReferences():int
+    {
+        $found = 0;
         foreach ($this->getTables() as $foreign_table) {
+            if (isset($this->references[$foreign_table->name])) {
+                continue;
+            }
+            // Traverse the generator to produce references.
             foreach ($foreign_table->fetchAll() as $row) {
 
             }
@@ -80,19 +113,17 @@ class TableManager {
                 $table = $this->getTable($table_name);
                 foreach ($columns as $column_name => $objects) {
                     foreach ($objects as $id => $object) {
-                        $lookup_table->insertRow([
-                            'foreign_table' => $foreign_table->name,
-                            'foreign_column' => $column_name,
-                            'reference' => $ref,
-                            'uuid' => $id,
-                            'row' => $table->insertRow($object)
-                        ]);
+                        if (isset($this->references[$foreign_table->name][$column_name][$ref][$id])) {
+                            continue;
+                        }
+                        $object = is_object($object) ? get_object_vars($object) : $object;
+                        $this->references[$foreign_table->name][$column_name][$ref][$id] = $table->insertRow($object);
+                        $found++;
                     }
                 }
             }
         }
-
-        return $lookup_table;
+        return $found;
     }
 
 }

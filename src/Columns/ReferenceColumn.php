@@ -22,13 +22,15 @@ class ReferenceColumn implements ColumnInterface {
         public readonly bool $nullable = true
     )
     {
-        $this->ref = $reference->{'$ref'};
+        $this->ref = $reference->getReference();
     }
 
     public function insert(int $index, $value) {
-        $valid = in_array(gettype($value), ['object', 'array']);
+        if (!$this->nullable && is_null($value)) {
+            throw new SchemaException("Null value is not allowed in {$this->tableName}.{$this->name}.");
+        }
 
-        if (!$valid || !(!$this->nullable && is_null($value))) {
+        if (!in_array(gettype($value), ['object', 'array'])) {
             throw new SchemaException("{$this->tableName}.{$this->name} value must be of type object or array: Value given: ".gettype($value).print_r($value, 1));
         }
         $this->values[$index] = $value;

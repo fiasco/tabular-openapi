@@ -9,6 +9,7 @@ use Fiasco\TabularOpenapi\SchemaException;
 use Fiasco\TabularOpenapi\Values\Value;
 use Generator;
 use TypeError;
+use UnitEnum;
 
 class Column implements ColumnInterface {
     protected array $values;
@@ -25,6 +26,10 @@ class Column implements ColumnInterface {
         // Normalize DateTime to string.
         if ($value instanceof DateTimeInterface) {
             $value = $value->format('c');
+        }
+
+        if ($value instanceof UnitEnum) {
+            $value = $value->value ?? $value->key;
         }
 
         if (is_null($value) && !$this->schema->nullable) {

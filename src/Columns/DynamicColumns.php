@@ -33,7 +33,7 @@ class DynamicColumns implements ColumnInterface
     public function insert(int $index, $value)
     {
         if (!is_object($value) && !is_array($value)) {
-            throw new SchemaException(get_class($this) . " expects an object or array to be passed as an insertable value. " . ucfirst(gettype($value)) . " given for table '{$this->tableName}'.");
+            throw new SchemaException(get_class($this) . " expects an object or array to be passed as an insertable value. " . ucfirst(gettype($value)) . " given for '{$this->tableName}.{$this->name}'.");
         }
         $fields = is_object($value) ? get_object_vars($value) : $value;
         foreach ($fields as $field => $value) {
