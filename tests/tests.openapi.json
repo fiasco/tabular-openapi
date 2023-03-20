@@ -1,0 +1,54 @@
+{
+    "openapi": "3.0.2",
+    "info": {
+        "title": "Fiasco/TabularOpenapi Test Specification",
+        "version": "1.0.0"
+    },
+    "components": {
+        "schemas": {
+            "cart": {
+                "type": "object",
+                "required": [
+                    "id"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "nullable": false
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/lineItem"
+                        }
+                    },
+                    "timestamp": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": false
+                    },
+                    "owner": {
+                        "$ref": "#/components/schemas/owner"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "lineItem": {
+                "type": "object",
+                "properties": {
+                    "sku": { "type": "string" },
+                    "quantity": { "type": "integer" }
+                },
+                "additionalProperties": true
+            },
+            "owner": {
+                "type": "object",
+                "properties": {
+                    "name": { "type": "string" },
+                    "email": {"type": "string", "format": "email" }
+                },
+                "additionalProperties": false
+            }
+        }
+    }
+}

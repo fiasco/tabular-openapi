@@ -4,7 +4,8 @@
     "type": "library",
     "autoload": {
         "psr-4": {
-            "Fiasco\\TabularOpenapi\\": "src/"
+            "Fiasco\\TabularOpenapi\\": "src/",
+            "FiascoTests\\TabularOpenapi\\": "tests/src/"
         }
     },
     "license": "MIT",
@@ -18,6 +19,6 @@
         "cebe/php-openapi": "^1.7"
     },
     "require-dev": {
-        "symfony/console": "^6.2"
+        "phpunit/phpunit": "^10.0"
     }
 }

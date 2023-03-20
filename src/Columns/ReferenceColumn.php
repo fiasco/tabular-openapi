@@ -2,48 +2,42 @@
 
 namespace Fiasco\TabularOpenapi\Columns;
 
-use cebe\openapi\ReferenceContext;
 use cebe\openapi\spec\Reference;
-use Fiasco\TabularOpenapi\Schema;
 use Fiasco\TabularOpenapi\SchemaException;
-use Fiasco\TabularOpenapi\Table;
+use Fiasco\TabularOpenapi\TableOptions;
+use Fiasco\TabularOpenapi\Values\Reference as ValuesReference;
+use Generator;
+use TypeError;
 
-class ReferenceColumn extends Column {
-    public readonly Table $referenceTable;
+class ReferenceColumn implements ColumnInterface {
+    protected array $values;
+    public readonly string $ref;
 
     public function __construct(
-        string $name, 
+        public readonly string $prefix,
+        public readonly string $name, 
         public readonly Reference $reference, 
-        Schema $schema,
-        string $tableName,
+        public readonly string $tableName,
+        public readonly int $options = TableOptions::STORE_REF->value,
+        public readonly bool $nullable = true
     )
     {
-        $table_name = str_replace('#/components/schemas/', '', $reference->getReference());
-        $this->referenceTable = $schema->getTable($table_name);
-        $context = new ReferenceContext($schema->openApi, $schema->uri);
-        parent::__construct($name, clone $reference->resolve($context), $schema, $tableName);
+        $this->ref = $reference->{'$ref'};
     }
 
-    public function insert(int $index, $value, string $table_uuid) {
-        $valid = match($this->openApiSchema->type) {
-            'object' => is_object($value) || is_array($value),
-            default => false
-        };
-        if (!$valid) {
-            throw new SchemaException("Cannot insert ".gettype($value)." into {$this->tableName}.{$this->name} of type {$this->openApiSchema->type}.");
+    public function insert(int $index, $value) {
+        $valid = in_array(gettype($value), ['object', 'array']);
+
+        if (!$valid || !(!$this->nullable && is_null($value))) {
+            throw new SchemaException("{$this->tableName}.{$this->name} value must be of type object or array: Value given: ".gettype($value).print_r($value, 1));
         }
-        if (!empty($value)) {
-            $i = $this->referenceTable->addRow($value, $table_uuid, $index);   
+        $this->values[$index] = $value;
+    }
+
+    public function get(int $index):Generator {
+        if (!array_key_exists($index, $this->values)) {
+            throw new TypeError("Row index of $index invalid for column: {$this->tableName}.{$this->name}.");
         }
-        parent::insert($index, [$this->referenceTable->uuid, $i ?? null], $table_uuid);
-    }
-
-    public function get(int $index) {
-        return $this->referenceTable->uuid;
-    }
-
-    public function getTable():Table
-    {
-        return $this->referenceTable;
+        yield new ValuesReference($index, $this->ref, $this->values[$index], $this->name);
     }
 }
