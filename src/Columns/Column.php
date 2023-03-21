@@ -8,6 +8,7 @@ use Exception;
 use Fiasco\TabularOpenapi\SchemaException;
 use Fiasco\TabularOpenapi\Values\Value;
 use Generator;
+use Stringable;
 use TypeError;
 use UnitEnum;
 
@@ -36,14 +37,14 @@ class Column implements ColumnInterface {
             throw new SchemaException("{$this->tableName}.{$this->name} value cannot be null");
         }
         $valid = match($this->schema->type) {
-            'string' => is_string($value),
+            'string' => is_string($value) || is_numeric($value) || is_int($value) || is_bool($value) || $value instanceof Stringable,
             'number' => is_numeric($value),
             'integer' => is_int($value),
             'boolean' => is_bool($value),
             default => false
         };
         if (!$valid) {
-            throw new SchemaException("{$this->tableName}.{$this->name} value must be of type '{$this->schema->type}': Value given: ".gettype($value).print_r($value, 1));
+            throw new SchemaException("{$this->tableName}.{$this->name} value must be of type '{$this->schema->type}': Value given: ".gettype($value).': '.print_r($value, 1));
         }
         $this->values[$index] = $value;
     }

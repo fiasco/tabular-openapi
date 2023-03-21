@@ -71,7 +71,7 @@ class ObjectColumn implements ColumnInterface {
             }
             $this->columns[$field]->insert($index, $value);
         }
-        if (!isset($this->dynamic)) {
+        if (!isset($this->dynamic) || empty($dynamic)) {
             return;
         }
         $this->dynamic->insert($index, $dynamic);

@@ -8,6 +8,9 @@ use TypeError;
 
 class CollapsedReferenceColumn extends ReferenceColumn {
     public function get(int $index):Generator {
+        if (!isset($this->values)) {
+            return;
+        }
         if (!array_key_exists($index, $this->values)) {
             throw new TypeError("Row index of $index invalid for column: {$this->tableName}.{$this->name}.");
         }

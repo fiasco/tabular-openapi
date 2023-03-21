@@ -73,22 +73,26 @@ class TableManager {
             new Column(name: 'foreign_table', schema: new Schema(['type' => 'string']), tableName: 'tabular_openapi_lookup'),
             new Column(name: 'foreign_column', schema: new Schema(['type' => 'string']), tableName: 'tabular_openapi_lookup'),
             new Column(name: 'reference', schema: new Schema(['type' => 'string']), tableName: 'tabular_openapi_lookup'),
-            new Column(name: 'uuid', schema: new Schema(['type' => 'string']), tableName: 'tabular_openapi_lookup'),
-            new Column(name: 'row', schema: new Schema(['type' => 'integer']), tableName: 'tabular_openapi_lookup'),
+            new Column(name: 'reference_uuid', schema: new Schema(['type' => 'string']), tableName: 'tabular_openapi_lookup'),
+            new Column(name: 'table_uuid', schema: new Schema(['type' => 'string']), tableName: 'tabular_openapi_lookup'),
+            new Column(name: 'table_delta', schema: new Schema(['type' => 'integer']), tableName: 'tabular_openapi_lookup'),
         );
 
 
         foreach ($this->references as $foreign_table => $columns) {
             foreach ($columns as $foreign_column => $refs) {
                 foreach ($refs as $ref => $ids) {
-                    foreach ($ids as $id => $row_id) {
-                        $lookup_table->insertRow([
-                            'foreign_table' => $foreign_table,
-                            'foreign_column' => $foreign_column,
-                            'reference' => $ref,
-                            'uuid' => $id,
-                            'row' => $row_id
-                        ]);
+                    foreach ($ids as $id => $table_uuids) {
+                        foreach ($table_uuids as $uuid => $row_id) {
+                            $lookup_table->insertRow([
+                                'foreign_table' => $foreign_table,
+                                'foreign_column' => $foreign_column,
+                                'reference' => $ref,
+                                'reference_uuid' => $id,
+                                'table_uuid' => $uuid,
+                                'table_delta' => $row_id
+                            ]);
+                        }
                     }
                 }
             }
@@ -117,7 +121,7 @@ class TableManager {
                             continue;
                         }
                         $object = is_object($object) ? get_object_vars($object) : $object;
-                        $this->references[$foreign_table->name][$column_name][$ref][$id] = $table->insertRow($object);
+                        $this->references[$foreign_table->name][$column_name][$ref][$id][$table->uuid] = $table->insertRow($object);
                         $found++;
                     }
                 }

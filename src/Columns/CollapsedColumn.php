@@ -10,7 +10,7 @@ use Generator;
 class CollapsedColumn extends Column {
 
     public function get(int $index):Generator {
-        foreach ($this->values[$index] as $i => $cell) {
+        foreach ($this->values[$index] ?? [] as $i => $cell) {
             yield new Row($cell->get($i), $i);
         }
     }

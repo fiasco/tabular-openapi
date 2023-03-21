@@ -11,6 +11,7 @@ use Fiasco\TabularOpenapi\Values\Reference;
 use Fiasco\TabularOpenapi\Values\Row;
 use Fiasco\TabularOpenapi\Values\Value;
 use Generator;
+use TypeError;
 
 class Table {
     public readonly array $columns;
@@ -49,7 +50,12 @@ class Table {
             $column_values[$column] = $value;
         }
         foreach ($column_keys as $key) {
-            $this->columns[$key]->insert($this->rows, $column_values[$key] ?? null, $this->uuid);
+            try {
+                $this->columns[$key]->insert($this->rows, $column_values[$key] ?? null);
+            }
+            catch (TypeError $e) {
+                throw new SchemaException("{$this->name}.{$key} cannot insert value of type ".gettype($column_values[$key])." into instance of ".get_class($this->columns[$key]), 0, $e);
+            }
         }
         return $this->rows++;
     }
@@ -141,7 +147,7 @@ class Table {
                 }
                 break;
             case $data instanceof Reference:
-                $this->externalRows[$data->ref][$data->name][$data->uuid] = $data->value;
+                $this->externalRows[$data->ref][$data->name][$data->key ?? $data->uuid] = $data->value;
                 $grid[$column->name][$data->index] = $data->key ?? $data->uuid;
                 break;
         }

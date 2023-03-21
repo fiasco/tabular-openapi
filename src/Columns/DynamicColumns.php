@@ -67,10 +67,11 @@ class DynamicColumns implements ColumnInterface
         }
         // Complex data types.
         if ($schema->type && $schema->type == 'object') {
-            $this->columns[$name] ??= new ObjectColumn($schema, $this->tableName, $this->columnPrefix, $name);
+            $this->columns[$name] ??= new ObjectColumn($schema, $this->tableName, $this->columnPrefix . $name, $name);
         } elseif ($schema->type && $schema->type == 'array') {
             $this->columns[$name] ??= new CollapsedColumn($this->columnPrefix . $name, $schema, $this->tableName);
         }
+        
         $this->columns[$name] ??= new PaddedColumn(
             name: $this->columnPrefix . $name,
             schema: $schema,
@@ -84,6 +85,7 @@ class DynamicColumns implements ColumnInterface
         return match (gettype($value)) {
             'NULL' => 'string',
             'double' => 'number',
+            'array' => array_is_list($value) ? 'array' : 'object',
             default => gettype($value)
         };
     }
