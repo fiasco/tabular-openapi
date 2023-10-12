@@ -62,6 +62,10 @@ class DynamicColumns implements ColumnInterface
                 $this->columns[$name] = new ReferenceColumn($this->columnPrefix . $name, $this->additionalProperties, $this->tableName);
                 return $this->columns[$name];
                 break;
+            case $this->additionalProperties instanceof Schema:
+                $schema = $this->additionalProperties;
+                break;
+
             default:
                 throw new UnexpectedValueException("Property 'additionalProperties' of " . get_class($this) . " contains an unexpected value: ".gettype($this->additionalProperties));
         }

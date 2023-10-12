@@ -41,6 +41,7 @@ class Column implements ColumnInterface {
             'number' => is_numeric($value),
             'integer' => is_int($value),
             'boolean' => is_bool($value),
+            null => true,
             default => false
         };
         if (!$valid) {

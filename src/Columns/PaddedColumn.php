@@ -24,6 +24,12 @@ class PaddedColumn extends Column {
             yield new Value($this->pad);
             return;
         }
+        $value = $this->values[$index];
+        // TODO: Support arrays.
+        if (is_array($value)) {
+            yield new Value($this->pad);
+            return;
+        }
         yield new Value($this->values[$index]);
     }
 }
